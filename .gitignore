@@ -1,0 +1,17 @@
+/target/
+/.tools/
+/.cache/
+/dist/
+/artifacts/
+*.log
+**/.dart_tool/
+**/.flutter-plugins*
+**/build/
+**/ephemeral/
+**/.packages
+**/Pods/
+**/.symlinks/
+.DS_Store
+.idea/
+.vscode/
+

@@ -1,0 +1,8 @@
+{
+  "checked_at": "2026-10-15",
+  "rust": "1.99.0",
+  "flutter": "3.47.7",
+  "dart": "3.13.5",
+  "flutter_rust_bridge": "2.13.0",
+  "policy": "Latest stable direct dependencies at implementation time, resolved transitive dependencies committed in lockfiles."
+}

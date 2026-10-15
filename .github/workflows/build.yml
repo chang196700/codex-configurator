@@ -1,0 +1,115 @@
+name: Native desktop builds
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            platform: windows
+            arch: x64
+          - os: windows-11-arm
+            platform: windows
+            arch: arm64
+          - os: ubuntu-22.04
+            platform: linux
+            arch: x64
+          - os: ubuntu-22.04-arm
+            platform: linux
+            arch: arm64
+          - os: macos-15-intel
+            platform: macos
+            arch: x64
+          - os: macos-15
+            platform: macos
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      CARGO_TERM_COLOR: always
+      FLUTTER_SUPPRESS_ANALYTICS: 'true'
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Linux native dependencies
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libclang-dev xvfb
+      - name: Windows Rust bootstrap
+        if: runner.os == 'Windows'
+        run: |
+          if (-not (Get-Command rustup -ErrorAction SilentlyContinue)) {
+            $arch = if ('${{ matrix.arch }}' -eq 'arm64') { 'aarch64' } else { 'x86_64' }
+            $installer = Join-Path $env:RUNNER_TEMP 'rustup-init.exe'
+            Invoke-WebRequest "https://static.rust-lang.org/rustup/dist/$arch-pc-windows-msvc/rustup-init.exe" -OutFile $installer
+            & $installer -y --profile minimal --default-toolchain none
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          (Join-Path $env:USERPROFILE '.cargo/bin') | Out-File $env:GITHUB_PATH -Append -Encoding utf8
+      - name: Unix Rust bootstrap
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          if ! command -v rustup >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none
+          fi
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - name: Set up pinned stable toolchain
+        run: |
+          $versions = Get-Content tool-versions.json -Raw | ConvertFrom-Json
+          rustup toolchain install $versions.rust --profile minimal --component rustfmt --component clippy
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo install flutter_rust_bridge_codegen --version $versions.flutter_rust_bridge --locked
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Set up native Flutter SDK
+        run: |
+          $versions = Get-Content tool-versions.json -Raw | ConvertFrom-Json
+          $flutterRoot = Join-Path $env:RUNNER_TEMP 'flutter'
+          git clone --depth 1 --branch $versions.flutter https://github.com/flutter/flutter.git $flutterRoot
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $flutterBin = Join-Path $flutterRoot 'bin'
+          $flutterBin | Out-File $env:GITHUB_PATH -Append -Encoding utf8
+          $env:PATH = "$flutterBin$([IO.Path]::PathSeparator)$env:PATH"
+          flutter config --no-analytics
+          flutter --version
+          dart --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build native CLI, TUI, and GUI
+        run: ./scripts/build.ps1 -Platform '${{ matrix.platform }}' -Architecture '${{ matrix.arch }}'
+      - name: Rust static checks
+        run: |
+          cargo fmt --all --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo clippy --workspace --locked -- -D warnings
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify generated bindings are reproducible
+        run: |
+          git diff --exit-code -- apps/gui/lib/src/rust apps/gui/rust/src/frb_generated.rs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify native artifact architecture
+        run: ./scripts/verify-artifacts.ps1 -Platform '${{ matrix.platform }}' -Architecture '${{ matrix.arch }}'
+      - name: Package portable applications
+        run: ./scripts/package.ps1 -Platform '${{ matrix.platform }}' -Architecture '${{ matrix.arch }}'
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: codex-configurator-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
+            dist/*.sha256
+          if-no-files-found: error

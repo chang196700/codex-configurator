@@ -1,0 +1,16 @@
+[package]
+name = "codex-configurator"
+version.workspace = true
+edition = "2024"
+license.workspace = true
+description = "CLI and terminal editor for Codex config.toml"
+
+[dependencies]
+clap = { version = "4.6.7", features = ["derive"] }
+serde_json = "1.0"
+codex-config-core = { path = "../config-core" }
+codex-config-tui = { path = "../config-tui" }
+
+[[bin]]
+name = "codex-configurator"
+path = "src/main.rs"

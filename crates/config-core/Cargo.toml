@@ -1,0 +1,22 @@
+[package]
+name = "codex-config-core"
+version = "0.1.0"
+edition = "2024"
+license.workspace = true
+
+[dependencies]
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.154", features = ["arbitrary_precision", "preserve_order"] }
+toml = "1.1.8"
+toml_edit = "0.25.17"
+jsonschema = { version = "0.58.6", default-features = false }
+sha2 = "0.11.1"
+similar = "3.2.0"
+tempfile = "3.27.0"
+dirs = "7.0.0"
+chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
+ureq = { version = "3.4.2", default-features = false, features = ["rustls"] }
+fs2 = "0.4.3"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_Storage_FileSystem", "Win32_Security", "Win32_Security_Authorization", "Win32_System_Memory", "Win32_System_Threading"] }

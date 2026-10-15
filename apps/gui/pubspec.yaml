@@ -1,0 +1,24 @@
+name: codex_configurator
+description: A schema-driven Codex configuration editor for desktop.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.13.5 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_rust_bridge: 2.13.0
+  file_selector: 1.1.0
+  codex_configurator_bridge:
+    path: rust_builder
+
+dev_dependencies:
+  flutter_lints: 6.0.0
+
+flutter:
+  config:
+    enable-swift-package-manager: false
+  uses-material-design: true
+
