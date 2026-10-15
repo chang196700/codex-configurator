@@ -59,7 +59,7 @@ The tool's Schema cache is `codex-configurator/schema.json` under the OS local a
 
 ## Build
 
-Versions were checked against stable releases on 2026-10-15 and are recorded in [tool-versions.json](tool-versions.json), Cargo.lock, and Dart lockfiles: Rust 1.99.0, Flutter 3.47.7 / Dart 3.13.5, FRB 2.13.0. The native directory picker uses [file_selector 1.1.0](https://pub.dev/packages/file_selector). Transitive packages follow SDK and upstream compatibility constraints without forced overrides.
+Versions were checked against stable releases on 2026-10-15 and are recorded in [tool-versions.json](tool-versions.json), Cargo.lock, and Dart lockfiles: Rust 1.99.0, Flutter 3.47.7 / Dart 3.13.5, FRB 2.13.0. The GUI Rust library is compiled and bundled by the Dart/Flutter Native Assets build hook; Cargokit is no longer used. The native directory picker uses [file_selector 1.1.0](https://pub.dev/packages/file_selector). Transitive packages follow SDK and upstream compatibility constraints without forced overrides.
 
 Install Git, PowerShell 7, Rust, Flutter, and the native desktop toolchain. Windows requires Visual Studio Desktop development with C++ and a Windows SDK. Linux requires Clang, CMake, Ninja, pkg-config, and GTK 3 development libraries. macOS requires Xcode and CocoaPods. Build on a native host of the requested architecture.
 

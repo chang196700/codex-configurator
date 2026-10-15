@@ -4,7 +4,7 @@ Codex Configurator is a local file editor and a static configuration analyzer. I
 
 The Cargo workspace contains a shared `codex-config-core` library, a `codex-configurator` CLI, a `codex-config-tui` library, and the Flutter FRB adapter. The Flutter desktop app is in `apps/gui`.
 
-The macOS runner uses the Cargokit CocoaPods integration and runs outside App Sandbox so the editor can access user-selected system, user, and project paths. It retains normal filesystem permissions. CI packages use the local ad-hoc signature required by macOS; no distribution certificate or notarization is configured. Windows packages include app-local Visual C++ redistributables.
+The macOS runner uses the Flutter Native Assets build hook and runs outside App Sandbox so the editor can access user-selected system, user, and project paths. It retains normal filesystem permissions. CI packages use the local ad-hoc signature required by macOS; no distribution certificate or notarization is configured. Windows packages include app-local Visual C++ redistributables.
 
 All frontends invoke the same JSON operation boundary through `codex_config_core::dispatch`. FRB exposes a single asynchronous Dart `request(requestJson: ...)` call. Rust owns all TOML parsing and persistence. Values cross this boundary as TOML literals or typed trees with exact integer text; JSON numbers are not used to round-trip configuration integers.
 

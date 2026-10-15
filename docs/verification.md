@@ -11,15 +11,15 @@ Date: 2026-10-15. Native host: Windows x64. All configuration writes used tempor
 
 ## Passed
 
-- `scripts/build.ps1 -Platform windows -Architecture x64`: optimized CLI/TUI executable and Flutter Windows release bundle. FRB Rust, Dart, and generator versions are all 2.13.0.
+- `scripts/build.ps1 -Platform windows -Architecture x64`: optimized CLI/TUI executable and Flutter Windows release bundle. FRB Rust, Dart, generator, and Native Assets hook versions are all 2.13.0.
 - `cargo fmt --all --check` and `cargo clippy --workspace --locked -- -D warnings`.
 - Regenerating FRB bindings with the pinned generator reproduced all four generated source files byte for byte.
 - `flutter analyze` for the complete GUI project: no issues found.
-- `scripts/verify-artifacts.ps1 -Platform windows -Architecture x64`: CLI, GUI, Flutter engine, Rust bridge, and bundled Visual C++ DLLs report x64 PE machine type.
+- `scripts/verify-artifacts.ps1 -Platform windows -Architecture x64`: the Native Assets manifest is present and contains the FRB code asset; CLI, GUI, Flutter engine, Rust bridge, and bundled Visual C++ DLLs report x64 PE machine type.
 - Release CLI public-interface checks: dry-run does not write; set/get; leading/trailing comments, CRLF, unknown fields and signed 64-bit values survive edits; backups restore exact original bytes; stale revisions are rejected; stdin UTF-8 BOM is accepted; invalid Profile names and invalid configurations return the expected error exit codes.
 - Core public RPC checks: system/user/Profile/project/CLI precedence, custom project root markers, trust and ignored project fields, source-relative paths, requirements diagnostics, redacted secrets, invalid schema imports and missing Codex handling.
 - Real ConPTY TUI session: 80×24 Chinese layout, schema search, model editing, draft application, unsaved-change prompt, discard and clean terminal restoration.
-- Actual generated Dart FRB API loaded the release Rust DLL and completed schema, typed inspection, nested edits, exact `9223372036854775807` round-trip, validation, diff, file save, conflict rejection, and backup restoration. The GUI's `CodexBackend` adapter was used in this check.
+- Actual generated Dart FRB API loaded the Native Assets-bundled release Rust DLL and completed schema, typed inspection, nested edits, exact `9223372036854775807` round-trip, validation, diff, file save, conflict rejection, and backup restoration. The GUI's `CodexBackend` adapter was used in this check.
 - Schema structure review: all 102 top-level properties are assigned to a category. Expanded form branches have controls/navigation for objects, unions, arrays, maps, and unrestricted values.
 - Native GUI process started successfully and remained responsive. Windows app-local Visual C++ runtime DLLs are included in the build and portable package.
 

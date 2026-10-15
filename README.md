@@ -61,7 +61,7 @@ codex-configurator features --catalog
 
 ## 从源码构建
 
-依赖版本以 2026-10-15 查询的最新稳定版为基准，记录在 [tool-versions.json](tool-versions.json) 与 Cargo/Dart 锁文件中：Rust 1.99.0、Flutter 3.47.7 / Dart 3.13.5、FRB 2.13.0。系统目录选择使用 [file_selector 1.1.0](https://pub.dev/packages/file_selector)。传递依赖遵循 SDK 和上游包的兼容约束，不强制覆盖。
+依赖版本以 2026-10-15 查询的最新稳定版为基准，记录在 [tool-versions.json](tool-versions.json) 与 Cargo/Dart 锁文件中：Rust 1.99.0、Flutter 3.47.7 / Dart 3.13.5、FRB 2.13.0。GUI 的 Rust 动态库使用 Dart/Flutter Native Assets build hook 编译并随应用打包，不再使用 Cargokit。系统目录选择使用 [file_selector 1.1.0](https://pub.dev/packages/file_selector)。传递依赖遵循 SDK 和上游包的兼容约束，不强制覆盖。
 
 需要 Git、PowerShell 7、对应宿主的 Rust 和 Flutter，以及 Flutter 桌面平台工具链。Windows 需 Visual Studio 的 C++ 桌面开发组件和 Windows SDK；Linux 需 Clang、CMake、Ninja、pkg-config、GTK 3 开发库；macOS 需 Xcode 和 CocoaPods。使用与目标架构一致的原生宿主。
 

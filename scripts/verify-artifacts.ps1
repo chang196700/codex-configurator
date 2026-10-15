@@ -16,6 +16,18 @@ $guiRoot = switch ($Platform) {
     'linux' { Join-Path $repoRoot "apps/gui/build/linux/$Architecture/release/bundle" }
     'macos' { Join-Path $repoRoot 'apps/gui/build/macos/Build/Products/Release/codex_configurator.app' }
 }
+$nativeAssetsManifest = switch ($Platform) {
+    'windows' { Join-Path $guiRoot 'data/flutter_assets/NativeAssetsManifest.json' }
+    'linux' { Join-Path $guiRoot 'data/flutter_assets/NativeAssetsManifest.json' }
+    'macos' { Join-Path $guiRoot 'Contents/Resources/flutter_assets/NativeAssetsManifest.json' }
+}
+if (-not (Test-Path -LiteralPath $nativeAssetsManifest -PathType Leaf)) {
+    throw "Native Assets manifest is missing: $nativeAssetsManifest"
+}
+$nativeAssets = (Get-Content -LiteralPath $nativeAssetsManifest -Raw | ConvertFrom-Json).'native-assets'
+if (-not $nativeAssets -or @($nativeAssets.PSObject.Properties).Count -eq 0) {
+    throw "Native Assets manifest contains no platform assets: $nativeAssetsManifest"
+}
 $nativeFiles = @($cli)
 if ($Platform -eq 'windows') {
     $nativeFiles += Get-ChildItem $guiRoot -File | Where-Object Extension -In '.exe', '.dll' | Select-Object -ExpandProperty FullName
