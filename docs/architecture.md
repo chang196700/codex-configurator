@@ -16,6 +16,14 @@ An editing target and an analysis context are separate concepts. Opening a profi
 
 The GUI starts with an explicit global context (`include_project: false`), independent of the process working directory. The top bar opens, switches, or closes a project through the native directory picker. A project transition first confirms all affected drafts and reads the next paths and target snapshot before closing the previous project documents. Global document roles survive changes to `CODEX_HOME`, including when a project contains the global configuration directory. Analysis and backup pages invalidate their cached results on context revisions and reject outdated asynchronous responses. CLI/TUI defaults still include their working-directory project context.
 
+## GUI appearance preferences
+
+`UiStyle` selects Follow system, Windows Fluent, macOS, Linux Yaru, or Material independently of light/dark mode. Follow system resolves the host platform to Fluent on Windows, macOS style on macOS, Yaru on Linux, and Material elsewhere. Explicit choices work across desktop hosts. The shared pages and workspace retain their configuration state while the presentation changes. Native window title bars, window controls, and folder pickers continue to follow the actual host operating system.
+
+`AppPreferences` uses `SharedPreferencesAsync` with the key `codex_configurator.ui_style`. This is a local GUI preference and never crosses FRB or modifies a Codex configuration document. Startup renders Follow system immediately and applies the asynchronous stored result; missing, invalid, and unreadable values resolve to Follow system. A user selection updates the interface immediately and queues a persistence write. Writes run in selection order, and a failed write does not prevent later saves. The caller receives each write failure so the GUI can report it through the existing floating notification without reverting the active style.
+
+Platform presentation uses `fluent_ui 4.16.1`, `macos_ui 2.2.2`, and `yaru 11.0.0`; preferences use `shared_preferences 2.5.6`. Their resolved dependencies are recorded in the Dart lockfile. Third-party licenses remain in the packaged notices; original application code keeps its MIT OR Apache-2.0 license.
+
 ## Runtime verification
 
 Full effective-configuration verification is tracked as TODO against https://github.com/openai/codex/issues/26255. There is no app-server integration. Optional `codex features list` observations are independent snapshots with command, executable version, timestamp, working directory, and Codex home. They do not certify unsaved drafts or profile contexts that the subcommand cannot establish.

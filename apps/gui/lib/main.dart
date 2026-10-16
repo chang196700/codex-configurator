@@ -2,13 +2,18 @@ import 'dart:async';
 import 'dart:ui' show AppExitResponse;
 
 import 'package:file_selector/file_selector.dart';
+import 'package:fluent_ui/fluent_ui.dart' as fluent;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:macos_ui/macos_ui.dart' as macos;
 
 import 'backend.dart';
 import 'editor_page.dart';
+import 'platform_theme.dart';
+import 'platform_widgets.dart';
 import 'utility_pages.dart';
-import 'typography.dart';
+import 'ui_preferences.dart';
 import 'workspace.dart';
 import 'src/rust/frb_generated.dart';
 
@@ -49,6 +54,9 @@ class _ConfiguratorAppState extends State<ConfiguratorApp>
   bool loading = true;
   bool choosingProject = false;
   ThemeMode themeMode = ThemeMode.system;
+  UiStyle uiStyle = UiStyle.system;
+  int _styleRevision = 0;
+  final AppPreferences preferences = AppPreferences();
   Workspace get w => widget.workspace;
 
   @override
@@ -58,7 +66,33 @@ class _ConfiguratorAppState extends State<ConfiguratorApp>
     w.chinese =
         WidgetsBinding.instance.platformDispatcher.locale.languageCode == 'zh';
     w.addListener(_updated);
+    _loadPreferences();
     _initialize();
+  }
+
+  Future<void> _loadPreferences() async {
+    final revision = _styleRevision;
+    final style = await preferences.loadUiStyle();
+    if (mounted && revision == _styleRevision) {
+      setState(() => uiStyle = style);
+    }
+  }
+
+  Future<void> _setUiStyle(UiStyle style) async {
+    if (style == uiStyle) return;
+    final revision = ++_styleRevision;
+    setState(() => uiStyle = style);
+    try {
+      await preferences.saveUiStyle(style);
+    } catch (error) {
+      if (mounted && revision == _styleRevision) {
+        w.error = w.tr(
+          '界面风格已切换，但未能保存偏好：$error',
+          'The style was applied, but the preference could not be saved: $error',
+        );
+        w.changed();
+      }
+    }
   }
 
   Future<void> _initialize() async {
@@ -93,7 +127,7 @@ class _ConfiguratorAppState extends State<ConfiguratorApp>
     if (context == null || w.busy) return false;
     final action = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => PlatformDialog(
         title: Text(w.tr('保存更改？', 'Save changes?')),
         content: SizedBox(
           width: 450,
@@ -105,15 +139,15 @@ class _ConfiguratorAppState extends State<ConfiguratorApp>
           ),
         ),
         actions: [
-          TextButton(
+          PlatformButton.quiet(
             onPressed: () => Navigator.pop(context, 'cancel'),
             child: Text(w.tr('取消', 'Cancel')),
           ),
-          TextButton(
+          PlatformButton.quiet(
             onPressed: () => Navigator.pop(context, 'discard'),
             child: Text(w.tr('放弃更改', 'Discard')),
           ),
-          FilledButton(
+          PlatformButton.primary(
             onPressed: () => Navigator.pop(context, 'save'),
             child: Text(w.tr('保存', 'Save')),
           ),
@@ -168,14 +202,14 @@ class _ConfiguratorAppState extends State<ConfiguratorApp>
     final controller = TextEditingController();
     final path = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => PlatformDialog(
         title: Text(w.tr('打开配置文件', 'Open configuration')),
         content: SizedBox(
           width: 620,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
+              PlatformTextField(
                 controller: controller,
                 autofocus: true,
                 decoration: InputDecoration(
@@ -205,11 +239,11 @@ class _ConfiguratorAppState extends State<ConfiguratorApp>
           ),
         ),
         actions: [
-          TextButton(
+          PlatformButton.quiet(
             onPressed: () => Navigator.pop(context),
             child: Text(w.tr('取消', 'Cancel')),
           ),
-          FilledButton(
+          PlatformButton.primary(
             onPressed: () {
               if (controller.text.trim().isNotEmpty) {
                 Navigator.pop(context, controller.text.trim());
@@ -226,68 +260,12 @@ class _ConfiguratorAppState extends State<ConfiguratorApp>
     }
   }
 
-  ThemeData _theme(Brightness brightness) {
-    final colors = ColorScheme.fromSeed(
-      seedColor: const Color(0xff376b78),
-      brightness: brightness,
-    );
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: colors,
-      brightness: brightness,
-      fontFamily: AppTypography.uiFamily,
-      fontFamilyFallback: AppTypography.uiFallback,
-      textTheme: const TextTheme(
-        bodyLarge: TextStyle(fontSize: 15, height: 1.5, letterSpacing: 0),
-        bodyMedium: TextStyle(fontSize: 14, height: 1.5, letterSpacing: 0),
-        bodySmall: TextStyle(fontSize: 12, height: 1.5, letterSpacing: 0),
-        titleMedium: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          height: 1.4,
-          letterSpacing: 0,
-        ),
-        titleSmall: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          height: 1.4,
-          letterSpacing: 0,
-        ),
-        labelLarge: TextStyle(fontSize: 13, letterSpacing: 0),
-        labelMedium: TextStyle(fontSize: 12, letterSpacing: 0),
-        labelSmall: TextStyle(fontSize: 11, letterSpacing: 0),
-      ),
-      scaffoldBackgroundColor: colors.surface,
-      cardTheme: CardThemeData(
-        elevation: 0,
-        color: colors.surfaceContainerLow,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: colors.outlineVariant.withValues(alpha: .55)),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        isDense: true,
-        filled: true,
-        fillColor: colors.surface,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: colors.outlineVariant),
-        ),
-      ),
-      dividerTheme: DividerThemeData(
-        color: colors.outlineVariant.withValues(alpha: .6),
-        thickness: 1,
-        space: 1,
-      ),
-    );
-  }
+  ThemeData _theme(Brightness brightness) => materialTheme(uiStyle, brightness);
 
   Widget _projectControl(BuildContext context, bool compact) {
     final disabled = loading || w.busy || choosingProject;
     if (!w.hasProject) {
-      return OutlinedButton.icon(
+      return PlatformButton.icon(
         onPressed: disabled ? null : _openProject,
         icon: const Icon(Icons.create_new_folder_outlined, size: 18),
         label: Text(w.tr('打开项目', 'Open project')),
@@ -343,8 +321,8 @@ class _ConfiguratorAppState extends State<ConfiguratorApp>
   }
 
   Widget _topBar(BuildContext context) => Container(
-    height: 64,
-    padding: const EdgeInsets.symmetric(horizontal: 20),
+    height: (MediaQuery.textScalerOf(context).scale(22) + 28).clamp(52, 100),
+    padding: const EdgeInsets.symmetric(horizontal: 16),
     color: Theme.of(context).colorScheme.surfaceContainerLow,
     child: LayoutBuilder(
       builder: (context, available) {
@@ -414,7 +392,7 @@ class _ConfiguratorAppState extends State<ConfiguratorApp>
             ],
             _projectControl(context, compact),
             const SizedBox(width: 8),
-            IconButton(
+            PlatformIconButton(
               onPressed: () => w.language(!w.chinese),
               tooltip: w.tr('Switch to English', '切换到中文'),
               icon: const Icon(Icons.translate, size: 20),
@@ -444,14 +422,37 @@ class _ConfiguratorAppState extends State<ConfiguratorApp>
     ),
   );
 
+  Widget _platformTheme(BuildContext context, Widget child) {
+    final brightness = Theme.of(context).brightness;
+    // Keep every ancestor of the navigator mounted across style changes so
+    // pages, controllers, drafts and navigation retain their state.
+    return PlatformStyleScope(
+      style: resolveUiStyle(uiStyle),
+      child: fluent.FluentTheme(
+        data: fluentTheme(brightness),
+        child: macos.MacosTheme(data: macosTheme(brightness), child: child),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => MaterialApp(
     navigatorKey: navigatorKey,
     debugShowCheckedModeBanner: false,
     title: 'Codex Configurator',
+    locale: Locale(w.chinese ? 'zh' : 'en'),
+    supportedLocales: const [Locale('zh'), Locale('en')],
+    localizationsDelegates: const [
+      fluent.FluentLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+    ],
     theme: _theme(Brightness.light),
     darkTheme: _theme(Brightness.dark),
     themeMode: themeMode,
+    builder: (context, child) =>
+        _platformTheme(context, child ?? const SizedBox.shrink()),
     home: Builder(
       builder: (context) => Shortcuts(
         shortcuts: const {
@@ -498,7 +499,8 @@ class _ConfiguratorAppState extends State<ConfiguratorApp>
                             ? const Center(child: CircularProgressIndicator())
                             : w.schema.isEmpty
                             ? Center(
-                                child: FilledButton.icon(
+                                child: PlatformButton.icon(
+                                  kind: PlatformButtonKind.primary,
                                   onPressed: _initialize,
                                   icon: const Icon(Icons.refresh),
                                   label: Text(w.tr('重新加载', 'Try again')),
@@ -507,46 +509,15 @@ class _ConfiguratorAppState extends State<ConfiguratorApp>
                             : Row(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  NavigationRail(
+                                  _AppNavigation(
                                     selectedIndex: page,
-                                    onDestinationSelected: (value) =>
+                                    onSelected: (value) =>
                                         setState(() => page = value),
-                                    labelType: NavigationRailLabelType.none,
-                                    minWidth: 64,
-                                    groupAlignment: -1,
-                                    destinations: [
-                                      NavigationRailDestination(
-                                        icon: Tooltip(
-                                          message: w.tr('配置编辑', 'Editor'),
-                                          child: const Icon(Icons.edit_note),
-                                        ),
-                                        label: Text(w.tr('配置编辑', 'Editor')),
-                                      ),
-                                      NavigationRailDestination(
-                                        icon: Tooltip(
-                                          message: w.tr('生效分析', 'Analysis'),
-                                          child: const Icon(
-                                            Icons.layers_outlined,
-                                          ),
-                                        ),
-                                        label: Text(w.tr('生效分析', 'Analysis')),
-                                      ),
-                                      NavigationRailDestination(
-                                        icon: Tooltip(
-                                          message: w.tr('备份恢复', 'Backups'),
-                                          child: const Icon(Icons.history),
-                                        ),
-                                        label: Text(w.tr('备份恢复', 'Backups')),
-                                      ),
-                                      NavigationRailDestination(
-                                        icon: Tooltip(
-                                          message: w.tr('工具设置', 'Settings'),
-                                          child: const Icon(
-                                            Icons.settings_outlined,
-                                          ),
-                                        ),
-                                        label: Text(w.tr('工具设置', 'Settings')),
-                                      ),
+                                    labels: [
+                                      w.tr('配置编辑', 'Editor'),
+                                      w.tr('生效分析', 'Analysis'),
+                                      w.tr('备份恢复', 'Backups'),
+                                      w.tr('工具设置', 'Settings'),
                                     ],
                                   ),
                                   const VerticalDivider(),
@@ -564,7 +535,11 @@ class _ConfiguratorAppState extends State<ConfiguratorApp>
                                           workspace: w,
                                           confirmDiscard: _confirmClose,
                                         ),
-                                        SettingsPage(workspace: w),
+                                        SettingsPage(
+                                          workspace: w,
+                                          uiStyle: uiStyle,
+                                          onUiStyleChanged: _setUiStyle,
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -635,6 +610,91 @@ class _ConfiguratorAppState extends State<ConfiguratorApp>
   }
 }
 
+class _AppNavigation extends StatelessWidget {
+  const _AppNavigation({
+    required this.selectedIndex,
+    required this.onSelected,
+    required this.labels,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+  final List<String> labels;
+  static const _icons = [
+    Icons.edit_note,
+    Icons.layers_outlined,
+    Icons.history,
+    Icons.settings_outlined,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final style = PlatformStyleScope.of(context);
+    if (style == UiStyle.material || style == UiStyle.linuxYaru) {
+      return NavigationRail(
+        selectedIndex: selectedIndex,
+        onDestinationSelected: onSelected,
+        labelType: NavigationRailLabelType.none,
+        minWidth: 64,
+        groupAlignment: -1,
+        destinations: [
+          for (var i = 0; i < labels.length; i++)
+            NavigationRailDestination(
+              icon: Tooltip(message: labels[i], child: Icon(_icons[i])),
+              label: Text(labels[i]),
+            ),
+        ],
+      );
+    }
+    final colors = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: 60,
+      child: ColoredBox(
+        color: colors.surfaceContainerLow,
+        child: Column(
+          children: [
+            const SizedBox(height: 8),
+            for (var i = 0; i < labels.length; i++)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                child: Semantics(
+                  selected: selectedIndex == i,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 48,
+                        height: 40,
+                        child: PlatformIconButton(
+                          tooltip: labels[i],
+                          icon: Icon(_icons[i], size: 22),
+                          isSelected: selectedIndex == i,
+                          onPressed: () => onSelected(i),
+                        ),
+                      ),
+                      if (style == UiStyle.windowsFluent && selectedIndex == i)
+                        Positioned(
+                          left: 0,
+                          child: Container(
+                            width: 3,
+                            height: 18,
+                            decoration: BoxDecoration(
+                              color: colors.primary,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _NotificationToast extends StatefulWidget {
   const _NotificationToast({
     super.key,
@@ -687,9 +747,12 @@ class _NotificationToastState extends State<_NotificationToast> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final style = PlatformStyleScope.of(context);
+    final nativeSurface =
+        style == UiStyle.windowsFluent || style == UiStyle.macos;
     final foreground = widget.isError
-        ? colors.onErrorContainer
-        : colors.onSecondaryContainer;
+        ? (nativeSurface ? colors.error : colors.onErrorContainer)
+        : (nativeSurface ? colors.onSurface : colors.onSecondaryContainer);
     final lineHeight = MediaQuery.textScalerOf(context).scale(14) * (20 / 14);
     final textPadding = ((40 - lineHeight) / 2).clamp(10.0, 20.0);
     final firstLineExtent = lineHeight + textPadding * 2;
@@ -713,10 +776,17 @@ class _NotificationToastState extends State<_NotificationToast> {
           child: Material(
             elevation: 6,
             shadowColor: colors.shadow.withValues(alpha: .25),
-            color: widget.isError
+            color: nativeSurface
+                ? colors.surfaceContainerLow
+                : widget.isError
                 ? colors.errorContainer
                 : colors.secondaryContainer,
-            borderRadius: BorderRadius.circular(12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(
+                style == UiStyle.windowsFluent ? 6 : 12,
+              ),
+              side: BorderSide(color: colors.outlineVariant),
+            ),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
               child: Row(
@@ -758,7 +828,7 @@ class _NotificationToastState extends State<_NotificationToast> {
                     width: 40,
                     height: firstLineExtent,
                     child: Center(
-                      child: IconButton(
+                      child: PlatformIconButton(
                         onPressed: widget.onDismiss,
                         tooltip: widget.closeLabel,
                         color: foreground,

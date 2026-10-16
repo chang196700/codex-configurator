@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'platform_widgets.dart';
+
 import 'typography.dart';
 import 'feature_stage.dart';
 
@@ -92,7 +94,8 @@ class NodeForm extends StatelessWidget {
                 ),
               ),
               if (permitsCustom)
-                FilledButton.tonalIcon(
+                PlatformButton.icon(
+                  kind: PlatformButtonKind.tonal,
                   onPressed: workspace.busy
                       ? null
                       : () => _addKey(context, node),
@@ -132,7 +135,7 @@ class NodeForm extends StatelessWidget {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
+                    PlatformIconButton(
                       tooltip: workspace.tr('删除', 'Remove'),
                       onPressed: workspace.busy
                           ? null
@@ -167,7 +170,8 @@ class NodeForm extends StatelessWidget {
         if (permitsCustom && properties.isNotEmpty && custom.isEmpty)
           Align(
             alignment: Alignment.centerLeft,
-            child: TextButton.icon(
+            child: PlatformButton.icon(
+              kind: PlatformButtonKind.quiet,
               onPressed: workspace.busy ? null : () => _addKey(context, node),
               icon: const Icon(Icons.add),
               label: Text(workspace.tr('添加自定义字段', 'Add custom field')),
@@ -190,11 +194,11 @@ class NodeForm extends StatelessWidget {
     final key = await showDialog<String>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+        builder: (context, setState) => PlatformDialog(
           title: Text(workspace.tr('添加配置项', 'Add entry')),
           content: SizedBox(
             width: 440,
-            child: TextField(
+            child: PlatformTextField(
               controller: controller,
               autofocus: true,
               decoration: InputDecoration(
@@ -215,11 +219,11 @@ class NodeForm extends StatelessWidget {
             ),
           ),
           actions: [
-            TextButton(
+            PlatformButton.quiet(
               onPressed: () => Navigator.pop(context),
               child: Text(workspace.tr('取消', 'Cancel')),
             ),
-            FilledButton(
+            PlatformButton.primary(
               onPressed: () {
                 final value = controller.text;
                 if (value.trim().isEmpty ||
@@ -294,7 +298,8 @@ class NodeForm extends StatelessWidget {
                 ),
               ),
             ),
-            FilledButton.tonalIcon(
+            PlatformButton.icon(
+              kind: PlatformButtonKind.tonal,
               onPressed: workspace.busy
                   ? null
                   : () => workspace.guard(
@@ -329,7 +334,7 @@ class NodeForm extends StatelessWidget {
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
+                  PlatformIconButton(
                     tooltip: workspace.tr('上移', 'Move up'),
                     icon: const Icon(Icons.arrow_upward, size: 18),
                     onPressed: workspace.busy || index == 0
@@ -341,7 +346,7 @@ class NodeForm extends StatelessWidget {
                             }),
                           ),
                   ),
-                  IconButton(
+                  PlatformIconButton(
                     tooltip: workspace.tr('下移', 'Move down'),
                     icon: const Icon(Icons.arrow_downward, size: 18),
                     onPressed: workspace.busy || index == children.length - 1
@@ -353,7 +358,7 @@ class NodeForm extends StatelessWidget {
                             }),
                           ),
                   ),
-                  IconButton(
+                  PlatformIconButton(
                     tooltip: workspace.tr('删除', 'Remove'),
                     icon: const Icon(Icons.remove_circle_outline, size: 18),
                     onPressed: workspace.busy
@@ -468,7 +473,7 @@ class FieldCard extends StatelessWidget {
                   width: 40,
                   height: 40,
                   child: value != null || document.pending.containsKey(pointer)
-                      ? IconButton(
+                      ? PlatformIconButton(
                           visualDensity: VisualDensity.compact,
                           tooltip: workspace.tr(
                             '移除当前层设置',
@@ -490,9 +495,8 @@ class FieldCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8, bottom: 12),
                 child: Text(
                   '${workspace.untranslated(schema) ? workspace.tr('英文说明 · ', '') : ''}$description',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(height: 1.5),
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(height: 1.5),
                 ),
               ),
             if (description.isEmpty)
@@ -519,7 +523,8 @@ class FieldCard extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
-                  FilledButton.tonalIcon(
+                  PlatformButton.icon(
+                    kind: PlatformButtonKind.tonal,
                     onPressed: () => navigate(pointer, schema),
                     icon: const Icon(Icons.arrow_forward, size: 16),
                     label: Text(workspace.tr('编辑', 'Edit')),
@@ -612,10 +617,10 @@ class _ScalarEditorState extends State<ScalarEditor> {
       content.add(
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
-          child: DropdownButtonFormField<String>(
+          child: PlatformSelect<String>(
             isExpanded: true,
             key: ValueKey('type-${widget.pointer}-$type'),
-            initialValue:
+            value:
                 [
                   'string',
                   'integer',
@@ -627,34 +632,16 @@ class _ScalarEditorState extends State<ScalarEditor> {
                 ].contains(type)
                 ? type
                 : 'string',
-            decoration: InputDecoration(labelText: w.tr('值类型', 'Value type')),
-            items: [
-              DropdownMenuItem(
-                value: 'string',
-                child: Text(w.tr('文本', 'Text')),
-              ),
-              DropdownMenuItem(
-                value: 'integer',
-                child: Text(w.tr('整数', 'Integer')),
-              ),
-              DropdownMenuItem(
-                value: 'number',
-                child: Text(w.tr('小数', 'Number')),
-              ),
-              DropdownMenuItem(
-                value: 'boolean',
-                child: Text(w.tr('开关', 'Boolean')),
-              ),
-              DropdownMenuItem(value: 'array', child: Text(w.tr('列表', 'List'))),
-              DropdownMenuItem(
-                value: 'object',
-                child: Text(w.tr('表', 'Table')),
-              ),
-              DropdownMenuItem(
-                value: 'datetime',
-                child: Text(w.tr('日期时间', 'Date / time')),
-              ),
-            ],
+            label: w.tr('值类型', 'Value type'),
+            items: {
+              'string': w.tr('文本', 'Text'),
+              'integer': w.tr('整数', 'Integer'),
+              'number': w.tr('小数', 'Number'),
+              'boolean': w.tr('开关', 'Boolean'),
+              'array': w.tr('列表', 'List'),
+              'object': w.tr('表', 'Table'),
+              'datetime': w.tr('日期时间', 'Date / time'),
+            },
             onChanged: w.busy
                 ? null
                 : (selection) {
@@ -675,10 +662,10 @@ class _ScalarEditorState extends State<ScalarEditor> {
                   entry.toString() == value.value?.toString(),
             );
       content.add(
-        DropdownButtonFormField<int>(
+        PlatformSelect<int>(
           isExpanded: true,
           key: ValueKey('enum-${widget.pointer}-${value?.literal}'),
-          initialValue: current != null && current >= 0 ? current : null,
+          value: current != null && current >= 0 ? current : null,
           hint: Text(
             value == null
                 ? w.tr('未设置 · 选择一个值', 'Not set · choose a value')
@@ -689,20 +676,9 @@ class _ScalarEditorState extends State<ScalarEditor> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          items: [
-            for (var i = 0; i < enums.length; i++)
-              DropdownMenuItem(
-                value: i,
-                child: Tooltip(
-                  message: enums[i].toString(),
-                  child: Text(
-                    enums[i].toString(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-          ],
+          items: {
+            for (var i = 0; i < enums.length; i++) i: enums[i].toString(),
+          },
           onChanged: w.busy
               ? null
               : (index) {
@@ -712,7 +688,7 @@ class _ScalarEditorState extends State<ScalarEditor> {
       );
     } else if (kind == 'boolean') {
       content.add(
-        SegmentedButton<int>(
+        PlatformSegments<int>(
           segments: [
             ButtonSegment(value: -1, label: Text(w.tr('未设置', 'Not set'))),
             ButtonSegment(value: 1, label: Text(w.tr('启用', 'On'))),
@@ -771,7 +747,7 @@ class _ScalarEditorState extends State<ScalarEditor> {
           ].any(normalizedPointer.contains) &&
           !normalizedPointer.contains('limit') &&
           !normalizedPointer.contains('budget');
-      final input = TextField(
+      final input = PlatformTextField(
         controller: controller,
         enabled: !w.busy,
         minLines: multiline ? 3 : 1,
@@ -787,7 +763,7 @@ class _ScalarEditorState extends State<ScalarEditor> {
           hintText: value == null ? w.tr('未设置', 'Not set') : null,
           labelText: kind == 'string' ? w.tr('值', 'Value') : kind,
           suffixIcon: sensitive && !multiline
-              ? IconButton(
+              ? PlatformIconButton(
                   tooltip: revealSecret
                       ? w.tr('隐藏', 'Hide')
                       : w.tr('显示', 'Reveal'),
@@ -809,7 +785,7 @@ class _ScalarEditorState extends State<ScalarEditor> {
                     : controller.text,
               ),
       );
-      final apply = FilledButton.tonal(
+      final apply = PlatformButton.tonal(
         onPressed: w.busy
             ? null
             : () => commit(
@@ -900,9 +876,9 @@ class _UnionEditorState extends State<UnionEditor> {
   @override
   Widget build(BuildContext context) {
     final w = widget.workspace;
-    final branches = asList(
-      widget.schema['oneOf'] ?? widget.schema['anyOf'],
-    ).map(asMap).toList();
+    final branches = asList(widget.schema['oneOf'] ?? widget.schema['anyOf'])
+        .map(asMap)
+        .toList();
     final value = widget.document.tree?.at(widget.pointer);
     final detected = value == null
         ? -1
@@ -949,27 +925,14 @@ class _UnionEditorState extends State<UnionEditor> {
           child: Row(
             children: [
               Expanded(
-                child: DropdownButtonFormField<int>(
+                child: PlatformSelect<int>(
                   isExpanded: true,
                   key: ValueKey('${widget.pointer}-$selected'),
-                  initialValue: selected,
-                  decoration: InputDecoration(
-                    labelText: w.tr('配置形式', 'Configuration form'),
-                  ),
-                  items: [
-                    for (var i = 0; i < branches.length; i++)
-                      DropdownMenuItem(
-                        value: i,
-                        child: Tooltip(
-                          message: branchName(i),
-                          child: Text(
-                            branchName(i),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
-                  ],
+                  value: selected,
+                  label: w.tr('配置形式', 'Configuration form'),
+                  items: {
+                    for (var i = 0; i < branches.length; i++) i: branchName(i),
+                  },
                   onChanged: w.busy
                       ? null
                       : (index) {
@@ -988,7 +951,7 @@ class _UnionEditorState extends State<UnionEditor> {
               const SizedBox(width: 16),
               if (value == null) Text(w.tr('未设置', 'Not set')),
               if (value != null)
-                IconButton(
+                PlatformIconButton(
                   tooltip: w.tr('移除当前层设置', 'Unset in this file'),
                   onPressed: w.busy
                       ? null
@@ -1044,7 +1007,8 @@ class _NodeHeading extends StatelessWidget {
             ),
           ),
           if (unset != null)
-            TextButton.icon(
+            PlatformButton.icon(
+              kind: PlatformButtonKind.quiet,
               onPressed: workspace.busy ? null : unset,
               icon: const Icon(Icons.restart_alt, size: 18),
               label: Text(workspace.tr('取消设置', 'Unset')),

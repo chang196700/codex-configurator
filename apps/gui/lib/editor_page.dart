@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'platform_widgets.dart';
+
 import 'backend.dart';
 import 'form_editor.dart';
 import 'typography.dart';
@@ -128,12 +130,12 @@ class _EditorPageState extends State<EditorPage> {
             ),
             const SizedBox(height: 24, child: VerticalDivider(width: 17)),
             if (compact) ...[
-              IconButton(
+              PlatformIconButton(
                 onPressed: w.busy ? null : widget.openDialog,
                 tooltip: w.tr('打开配置文件', 'Open configuration'),
                 icon: const Icon(Icons.file_open_outlined, size: 19),
               ),
-              IconButton.filledTonal(
+              PlatformIconButton.filledTonal(
                 onPressed: save,
                 tooltip: w.tr('保存', 'Save'),
                 icon: const Icon(Icons.save_outlined, size: 19),
@@ -166,19 +168,20 @@ class _EditorPageState extends State<EditorPage> {
                 itemBuilder: (_) => _pathItems(),
                 onSelected: (path) => w.guard(() => w.open(path)),
               ),
-              IconButton(
+              PlatformIconButton(
                 tooltip: w.tr('管理 Profiles', 'Manage profiles'),
                 icon: const Icon(Icons.person_outline, size: 20),
                 onPressed: w.busy ? null : _manageProfiles,
               ),
               const SizedBox(width: 4),
-              OutlinedButton.icon(
+              PlatformButton.icon(
                 onPressed: w.busy ? null : widget.openDialog,
                 icon: const Icon(Icons.file_open_outlined, size: 18),
                 label: Text(w.tr('打开', 'Open')),
               ),
               const SizedBox(width: 8),
-              FilledButton.icon(
+              PlatformButton.icon(
+                kind: PlatformButtonKind.primary,
                 onPressed: save,
                 icon: const Icon(Icons.save_outlined, size: 18),
                 label: Text(w.tr('保存', 'Save')),
@@ -217,7 +220,7 @@ class _EditorPageState extends State<EditorPage> {
             children: [
               Tooltip(
                 message: w.tr('校验', 'Validate'),
-                child: TextButton(
+                child: PlatformButton.quiet(
                   style: buttonStyle,
                   onPressed: w.busy
                       ? null
@@ -248,7 +251,7 @@ class _EditorPageState extends State<EditorPage> {
                 ),
               ),
               const SizedBox(width: 8),
-              SegmentedButton<String>(
+              PlatformSegments<String>(
                 style: buttonStyle,
                 showSelectedIcon: false,
                 segments: [
@@ -329,7 +332,7 @@ class _EditorPageState extends State<EditorPage> {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
-                    IconButton(
+                    PlatformIconButton(
                       onPressed: () => Navigator.pop(dialogContext),
                       tooltip: w.tr('关闭', 'Close'),
                       icon: const Icon(Icons.close),
@@ -445,7 +448,7 @@ class _EditorPageState extends State<EditorPage> {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  FilledButton(
+                  PlatformButton.primary(
                     onPressed: widget.openDialog,
                     child: Text(w.tr('打开配置文件', 'Open configuration')),
                   ),
@@ -501,7 +504,8 @@ class _EditorPageState extends State<EditorPage> {
                                   child: Row(
                                     children: [
                                       if (compactNavigation) ...[
-                                        TextButton.icon(
+                                        PlatformButton.icon(
+                                          kind: PlatformButtonKind.quiet,
                                           onPressed: narrowNavigation
                                               ? _showNavigation
                                               : () => setState(
@@ -516,7 +520,7 @@ class _EditorPageState extends State<EditorPage> {
                                         ),
                                         const SizedBox(width: 8),
                                       ] else ...[
-                                        IconButton(
+                                        PlatformIconButton(
                                           onPressed: () => setState(
                                             () => navigationCollapsed = true,
                                           ),
@@ -543,7 +547,7 @@ class _EditorPageState extends State<EditorPage> {
                                         const SizedBox(width: 4),
                                       ],
                                       if (trail.isNotEmpty)
-                                        IconButton(
+                                        PlatformIconButton(
                                           onPressed: () => setState(
                                             () => trail.removeLast(),
                                           ),
@@ -568,7 +572,7 @@ class _EditorPageState extends State<EditorPage> {
                                         ),
                                       ),
                                       if (trail.length > 1)
-                                        TextButton(
+                                        PlatformButton.quiet(
                                           onPressed: () =>
                                               setState(() => trail.clear()),
                                           child: Text(
@@ -601,7 +605,7 @@ class _EditorPageState extends State<EditorPage> {
                                                   ),
                                                 ),
                                                 const SizedBox(height: 12),
-                                                TextButton(
+                                                PlatformButton.quiet(
                                                   onPressed: () => setState(
                                                     () => view = 'toml',
                                                   ),
@@ -698,7 +702,7 @@ class _EditorPageState extends State<EditorPage> {
                     ),
                   ),
                   const SizedBox(width: 7),
-                  IconButton(
+                  PlatformIconButton(
                     onPressed: w.busy
                         ? null
                         : () => widget.closeDocument(document),
@@ -791,7 +795,7 @@ class _EditorPageState extends State<EditorPage> {
       children: [
         Padding(
           padding: const EdgeInsets.all(8),
-          child: TextField(
+          child: PlatformTextField(
             controller: queryController,
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.search, size: 19),
@@ -1036,7 +1040,7 @@ class _RawEditorState extends State<RawEditor> {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.all(12),
-    child: TextField(
+    child: PlatformTextField(
       controller: controller,
       enabled: !widget.workspace.busy,
       expands: true,

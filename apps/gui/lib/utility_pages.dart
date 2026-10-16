@@ -2,10 +2,13 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import 'platform_widgets.dart';
+
 import 'backend.dart';
 import 'editor_page.dart' show DiagnosticsPanel;
 import 'feature_stage.dart';
 import 'typography.dart';
+import 'ui_preferences.dart';
 import 'workspace.dart';
 
 String _display(dynamic value) {
@@ -150,7 +153,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
                     actions: [
                       SizedBox(
                         width: 230,
-                        child: TextField(
+                        child: PlatformTextField(
                           controller: profile,
                           decoration: InputDecoration(
                             labelText: w.tr(
@@ -161,7 +164,8 @@ class _AnalysisPageState extends State<AnalysisPage> {
                           ),
                         ),
                       ),
-                      FilledButton.icon(
+                      PlatformButton.icon(
+                        kind: PlatformButtonKind.primary,
                         onPressed: w.busy ? null : analyze,
                         icon: const Icon(Icons.play_arrow, size: 18),
                         label: Text(w.tr('分析', 'Analyze')),
@@ -169,7 +173,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
                     ],
                   ),
                   const SizedBox(height: 14),
-                  TextField(
+                  PlatformTextField(
                     controller: overrides,
                     minLines: 1,
                     maxLines: 4,
@@ -271,7 +275,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
                         ),
                       ),
                     const SizedBox(height: 12),
-                    TextField(
+                    PlatformTextField(
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.search, size: 19),
                         hintText: w.tr(
@@ -341,7 +345,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
                                 ],
                               ),
                               actions: [
-                                OutlinedButton(
+                                PlatformButton(
                                   onPressed: w.busy || !w.hasProject
                                       ? null
                                       : verifyFeatures,
@@ -350,7 +354,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
                               ],
                             ),
                             const SizedBox(height: 14),
-                            TextField(
+                            PlatformTextField(
                               controller: executable,
                               decoration: InputDecoration(
                                 labelText: w.tr(
@@ -506,7 +510,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
     child: InkWell(
       onTap: () => showDialog<void>(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (context) => PlatformDialog(
           title: SelectableText(entry['pointer']?.toString() ?? ''),
           content: SizedBox(
             width: 700,
@@ -566,7 +570,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
             ),
           ),
           actions: [
-            TextButton(
+            PlatformButton.quiet(
               onPressed: () => Navigator.pop(context),
               child: Text(w.tr('关闭', 'Close')),
             ),
@@ -819,7 +823,7 @@ class _BackupsPageState extends State<BackupsPage> {
     if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => PlatformDialog(
         title: Text(w.tr('恢复这个备份？', 'Restore this backup?')),
         content: Text(
           w.tr(
@@ -828,11 +832,11 @@ class _BackupsPageState extends State<BackupsPage> {
           ),
         ),
         actions: [
-          TextButton(
+          PlatformButton.quiet(
             onPressed: () => Navigator.pop(context, false),
             child: Text(w.tr('取消', 'Cancel')),
           ),
-          FilledButton(
+          PlatformButton.primary(
             onPressed: () => Navigator.pop(context, true),
             child: Text(w.tr('恢复', 'Restore')),
           ),
@@ -864,7 +868,7 @@ class _BackupsPageState extends State<BackupsPage> {
       Padding(
         padding: const EdgeInsets.all(16),
         child: _CompactToolbar(
-          leading: TextField(
+          leading: PlatformTextField(
             controller: path,
             enabled: !w.busy,
             decoration: InputDecoration(
@@ -874,7 +878,7 @@ class _BackupsPageState extends State<BackupsPage> {
             onSubmitted: (_) => refresh(),
           ),
           actions: [
-            TextButton(
+            PlatformButton.quiet(
               onPressed: w.busy || w.active == null
                   ? null
                   : () {
@@ -883,7 +887,7 @@ class _BackupsPageState extends State<BackupsPage> {
                     },
               child: Text(w.tr('使用当前文件', 'Use current file')),
             ),
-            OutlinedButton.icon(
+            PlatformButton.icon(
               onPressed: w.busy ? null : refresh,
               icon: const Icon(Icons.refresh, size: 18),
               label: Text(w.tr('刷新', 'Refresh')),
@@ -961,7 +965,8 @@ class _BackupsPageState extends State<BackupsPage> {
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             actions: [
-                              FilledButton.icon(
+                              PlatformButton.icon(
+                                kind: PlatformButtonKind.primary,
                                 onPressed: w.busy ? null : restore,
                                 icon: const Icon(Icons.restore, size: 18),
                                 label: Text(w.tr('恢复备份', 'Restore backup')),
@@ -1000,8 +1005,15 @@ class _BackupsPageState extends State<BackupsPage> {
 }
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key, required this.workspace});
+  const SettingsPage({
+    super.key,
+    required this.workspace,
+    this.uiStyle = UiStyle.system,
+    this.onUiStyleChanged,
+  });
   final Workspace workspace;
+  final UiStyle uiStyle;
+  final ValueChanged<UiStyle>? onUiStyleChanged;
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
@@ -1043,11 +1055,11 @@ class _SettingsPageState extends State<SettingsPage> {
     final controller = TextEditingController();
     final path = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => PlatformDialog(
         title: Text(w.tr('导入官方 schema', 'Import schema')),
         content: SizedBox(
           width: 550,
-          child: TextField(
+          child: PlatformTextField(
             controller: controller,
             autofocus: true,
             decoration: InputDecoration(
@@ -1056,11 +1068,11 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ),
         actions: [
-          TextButton(
+          PlatformButton.quiet(
             onPressed: () => Navigator.pop(context),
             child: Text(w.tr('取消', 'Cancel')),
           ),
-          FilledButton(
+          PlatformButton.primary(
             onPressed: () {
               if (controller.text.trim().isNotEmpty) {
                 Navigator.pop(context, controller.text.trim());
@@ -1086,12 +1098,77 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _CompactToolbar(
+                  inlineWidth: 500,
+                  leadingMaxWidth: 180,
+                  leading: SizedBox(
+                    width: 180,
+                    child: Text(
+                      w.tr('界面语言', 'Language'),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  actions: [
+                    PlatformSegments<bool>(
+                      segments: const [
+                        ButtonSegment(value: true, label: Text('简体中文')),
+                        ButtonSegment(value: false, label: Text('English')),
+                      ],
+                      selected: {w.chinese},
+                      onSelectionChanged: (selection) =>
+                          w.language(selection.first),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                _CompactToolbar(
+                  inlineWidth: 500,
+                  leadingMaxWidth: 180,
+                  leading: SizedBox(
+                    width: 180,
+                    child: Text(
+                      w.tr('界面风格', 'Interface style'),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  actions: [
+                    SizedBox(
+                      width: 220,
+                      child: PlatformSelect<UiStyle>(
+                        isExpanded: true,
+                        value: widget.uiStyle,
+                        onChanged: widget.onUiStyleChanged == null
+                            ? null
+                            : (style) {
+                                if (style != null) {
+                                  widget.onUiStyleChanged!(style);
+                                }
+                              },
+                        items: {
+                          for (final style in UiStyle.values)
+                            style: style.label(chinese: w.chinese),
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
                   w.tr('工具配置目录', 'Tool configuration directory'),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 18),
-                TextField(
+                PlatformTextField(
                   controller: home,
                   decoration: InputDecoration(
                     labelText: 'CODEX_HOME',
@@ -1102,7 +1179,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
                 const SizedBox(height: 18),
-                FilledButton.tonalIcon(
+                PlatformButton.icon(
+                  kind: PlatformButtonKind.tonal,
                   onPressed: w.busy
                       ? null
                       : () => w.guard(() async {
@@ -1178,19 +1256,19 @@ class _SettingsPageState extends State<SettingsPage> {
                   spacing: 12,
                   runSpacing: 10,
                   children: [
-                    FilledButton.tonal(
+                    PlatformButton.tonal(
                       onPressed: w.busy ? null : () => schemaAction('check'),
                       child: Text(w.tr('检查更新', 'Check for updates')),
                     ),
-                    OutlinedButton(
+                    PlatformButton(
                       onPressed: w.busy ? null : () => schemaAction('update'),
                       child: Text(w.tr('更新', 'Update')),
                     ),
-                    OutlinedButton(
+                    PlatformButton(
                       onPressed: w.busy ? null : importSchema,
                       child: Text(w.tr('导入文件', 'Import file')),
                     ),
-                    TextButton(
+                    PlatformButton.quiet(
                       onPressed: w.busy ? null : () => schemaAction('reset'),
                       child: Text(w.tr('恢复内置快照', 'Restore bundled snapshot')),
                     ),
@@ -1212,31 +1290,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                 )),
                     ),
                   ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: _CompactToolbar(
-              inlineWidth: 500,
-              leadingMaxWidth: 180,
-              leading: Text(
-                w.tr('界面语言', 'Language'),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              actions: [
-                SegmentedButton<bool>(
-                  segments: const [
-                    ButtonSegment(value: true, label: Text('简体中文')),
-                    ButtonSegment(value: false, label: Text('English')),
-                  ],
-                  selected: {w.chinese},
-                  onSelectionChanged: (selection) =>
-                      w.language(selection.first),
-                ),
               ],
             ),
           ),
@@ -1302,7 +1355,7 @@ class _ProfilesDialogState extends State<ProfilesDialog> {
       final controller = TextEditingController();
       target = await showDialog<String>(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (context) => PlatformDialog(
           title: Text(
             action == 'create'
                 ? w.tr('新建 Profile', 'New profile')
@@ -1312,7 +1365,7 @@ class _ProfilesDialogState extends State<ProfilesDialog> {
           ),
           content: SizedBox(
             width: 400,
-            child: TextField(
+            child: PlatformTextField(
               controller: controller,
               autofocus: true,
               decoration: InputDecoration(labelText: w.tr('新名称', 'New name')),
@@ -1324,11 +1377,11 @@ class _ProfilesDialogState extends State<ProfilesDialog> {
             ),
           ),
           actions: [
-            TextButton(
+            PlatformButton.quiet(
               onPressed: () => Navigator.pop(context),
               child: Text(w.tr('取消', 'Cancel')),
             ),
-            FilledButton(
+            PlatformButton.primary(
               onPressed: () {
                 if (controller.text.trim().isNotEmpty) {
                   Navigator.pop(context, controller.text.trim());
@@ -1343,15 +1396,15 @@ class _ProfilesDialogState extends State<ProfilesDialog> {
     } else {
       final confirmed = await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (context) => PlatformDialog(
           title: Text(w.tr('删除 Profile？', 'Delete profile?')),
           content: Text(source ?? ''),
           actions: [
-            TextButton(
+            PlatformButton.quiet(
               onPressed: () => Navigator.pop(context, false),
               child: Text(w.tr('取消', 'Cancel')),
             ),
-            FilledButton(
+            PlatformButton.primary(
               onPressed: () => Navigator.pop(context, true),
               child: Text(w.tr('删除', 'Delete')),
             ),
@@ -1399,11 +1452,12 @@ class _ProfilesDialogState extends State<ProfilesDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
+  Widget build(BuildContext context) => PlatformDialog(
     title: Row(
       children: [
         Expanded(child: Text(w.tr('管理 Profiles', 'Manage profiles'))),
-        TextButton.icon(
+        PlatformButton.icon(
+          kind: PlatformButtonKind.quiet,
           onPressed: busy ? null : () => change('create'),
           icon: const Icon(Icons.add),
           label: Text(w.tr('新建', 'New')),
@@ -1448,14 +1502,14 @@ class _ProfilesDialogState extends State<ProfilesDialog> {
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                IconButton(
+                                PlatformIconButton(
                                   tooltip: w.tr('复制', 'Copy'),
                                   onPressed: busy
                                       ? null
                                       : () => change('copy', name(profile)),
                                   icon: const Icon(Icons.copy, size: 18),
                                 ),
-                                IconButton(
+                                PlatformIconButton(
                                   tooltip: w.tr('重命名', 'Rename'),
                                   onPressed: busy
                                       ? null
@@ -1465,7 +1519,7 @@ class _ProfilesDialogState extends State<ProfilesDialog> {
                                     size: 18,
                                   ),
                                 ),
-                                IconButton(
+                                PlatformIconButton(
                                   tooltip: w.tr('删除', 'Delete'),
                                   onPressed: busy
                                       ? null
@@ -1486,7 +1540,7 @@ class _ProfilesDialogState extends State<ProfilesDialog> {
       ),
     ),
     actions: [
-      TextButton(
+      PlatformButton.quiet(
         onPressed: busy ? null : () => Navigator.pop(context),
         child: Text(w.tr('关闭', 'Close')),
       ),

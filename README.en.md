@@ -11,6 +11,7 @@ Original code is dual licensed under **MIT OR Apache-2.0**. Native projects and 
 - Separate editor, analysis, backups, and settings pages, with the current page title in the app bar; document tabs, categories, nested navigation, and search. Profiles are managed from the editor.
 - Forms generated from the official JSON Schema: scalars, enums, arrays, dynamic maps, nested objects, and unions. Unset values remain distinct from explicitly configured defaults. Raw TOML and diff views are available.
 - Chinese and English UI. Configuration keys retain their original names. Untranslated upstream descriptions fall back to English with an explicit fallback status.
+- Settings includes an interface style selector for Follow system, Windows Fluent, macOS, Linux Yaru, and Material. Changes apply immediately and the choice is saved locally.
 - A shared Rust core preserves comments, unknown fields, and untouched formatting. TOML literals preserve integer precision across the bridge.
 - System, user, project, and independent `<name>.config.toml` Profile files. Editing targets and analysis contexts are separate.
 - Validation before saving, disk revision checks, atomic replacement, backups, and restoration. Pending field input participates in save and unsaved-change handling.
@@ -28,6 +29,8 @@ Extract the Windows portable archive and launch `gui/codex_configurator.exe`. Ke
 The GUI starts with global settings and does not treat its launch directory as a project. Use **Open project** at the top right to choose a folder with the native directory picker. Its `.codex/config.toml` opens as a draft; missing files are created only on save. The project menu can switch projects or close the project to return to global settings, with unsaved project drafts confirmed first. Settings retains `CODEX_HOME` and tool options; project selection belongs in the app bar. Global analysis excludes project layers, and optional Codex feature observations require an open project.
 
 The interface uses native system fonts, with Segoe UI and Microsoft YaHei UI on Windows, plus monospace fonts for configuration keys and TOML. Notifications float at the bottom right without changing page layout.
+
+Choose **Interface style** beneath the language selector in Settings. **Follow system** uses Fluent on Windows, macOS style on macOS, and Yaru on Linux. Any desktop platform can also use a manually selected style. Style selection is independent from light/dark mode and takes effect without restarting. The choice is stored only in local GUI preferences, never in Codex `config.toml`. The host operating system continues to provide the title bar, window controls, and directory picker. Missing, unreadable, or invalid preferences fall back to Follow system.
 
 File tabs share a row with Open and Save. Narrow windows use icon actions and a More menu while tabs scroll horizontally. Main navigation stays compact; collapse the category pane with the arrow above the form and reopen it with Categories. Page actions align to the left and content uses the available width.
 
@@ -60,6 +63,8 @@ The tool's Schema cache is `codex-configurator/schema.json` under the OS local a
 ## Build
 
 Versions were checked against stable releases on 2026-10-15 and are recorded in [tool-versions.json](tool-versions.json), Cargo.lock, and Dart lockfiles: Rust 1.99.0, Flutter 3.47.7 / Dart 3.13.5, FRB 2.13.0. The GUI Rust library is compiled and bundled by the Dart/Flutter Native Assets build hook; Cargokit is no longer used. The native directory picker uses [file_selector 1.1.0](https://pub.dev/packages/file_selector). Transitive packages follow SDK and upstream compatibility constraints without forced overrides.
+
+Interface styles use pinned dependencies `fluent_ui 4.16.1` (BSD-3-Clause), `macos_ui 2.2.2` (MIT), and `yaru 11.0.0` (MPL-2.0 for its theme and widgets). Local preferences use `shared_preferences 2.5.6` (BSD-3-Clause). See [third-party notices](THIRD_PARTY_NOTICES.md) for dependency and asset licenses. Original project code remains MIT OR Apache-2.0.
 
 Install Git, PowerShell 7, Rust, Flutter, and the native desktop toolchain. Windows requires Visual Studio Desktop development with C++ and a Windows SDK. Linux requires Clang, CMake, Ninja, pkg-config, and GTK 3 development libraries. macOS requires Xcode and CocoaPods. Build on a native host of the requested architecture.
 
